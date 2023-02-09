@@ -8,7 +8,6 @@ Okno::Okno(QWidget *parent)
     ui->setupUi(this);
     refreshPointsCountText();
     generatePoints();
-    ui->displayFrame->setWindowOpacity(0.2); //
 }
 
 Okno::~Okno()
@@ -47,7 +46,7 @@ void Okno::refreshPointsCountText()
    ui->points_count_label->setText(QString::number(points.size(),10));
 }
 
-void Okno::generatePoints() // dodac resizing
+void Okno::generatePoints()
 {
     while (points.size() < startPointsCount)
     {
@@ -80,27 +79,42 @@ void Okno::clearPoints()
     points.clear();
 }
 
-//Mouse draw and delete-------------------------------------
+//Mouse---------------------------------------
 void Okno::mousePressEvent(QMouseEvent *event)
 {
     QPoint mousePoint {event->pos()};
     bool mouseCollision {false};
     std::vector<QPoint>::iterator itPointToDelete;
 
-    for (std::vector<QPoint>::iterator it = points.begin() ; it != points.end(); ++it)
-    {
-        int distance = 400;
-        if ( (pow((*it).x() - mousePoint.x(), 2) < distance) && (pow((*it).y() - mousePoint.y(), 2) < distance) )
+    if (event->button() == Qt::LeftButton){
+        for (std::vector<QPoint>::iterator it = points.begin() ; it != points.end(); ++it)
         {
-            mouseCollision = true;
-            itPointToDelete = it;
+            int distance = 400;
+            if ( (pow((*it).x() - mousePoint.x(), 2) < distance) && (pow((*it).y() - mousePoint.y(), 2) < distance) )
+            {
+                mouseCollision = true;
+            }
         }
+        if (!mouseCollision) points.push_back(mousePoint);
+        update();
+        refreshPointsCountText();
     }
-    if (!mouseCollision) points.push_back(mousePoint);
-    else points.erase(itPointToDelete);
 
-    update();
-    refreshPointsCountText();
+    if (event->button() == Qt::RightButton){
+
+        for (std::vector<QPoint>::iterator it = points.begin() ; it != points.end(); ++it)
+        {
+            int distance = 400;
+            if ( (pow((*it).x() - mousePoint.x(), 2) < distance) && (pow((*it).y() - mousePoint.y(), 2) < distance) )
+            {
+                mouseCollision = true;
+                itPointToDelete = it;
+            }
+        }
+        if (mouseCollision) points.erase(itPointToDelete);
+        update();
+        refreshPointsCountText();
+    }
 }
 
 //Draw-------------------------------------------
