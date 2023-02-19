@@ -33,8 +33,8 @@ private slots:
 
 protected:
     void paintEvent(QPaintEvent *event);
-    void drawPoints(QPainter *painter) const;
-    void drawLines(QPainter *painter) const;
+    void drawPoints(QPainter &painter) const;
+    void drawLines(QPainter &painter) const;
 
     void mousePressEvent(QMouseEvent *event);
 
