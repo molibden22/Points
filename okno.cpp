@@ -17,6 +17,10 @@ void configurePainterForLines(QPainter &painter) {
   painter.setPen(line_pen);
 }
 
+bool checkCollision(const QPoint& point1, const QPoint& point2, const int minimumDistance) {
+    return ((pow(point1.x() - point2.x(), 2) < minimumDistance) && (pow(point1.y() - point2.y(), 2) < minimumDistance));
+}
+
 } // namespace
 
 Okno::Okno(QWidget *parent) : QWidget(parent), ui(new Ui::Okno) {
@@ -85,8 +89,7 @@ void Okno::mousePressEvent(QMouseEvent *event) {
     for (std::vector<QPoint>::iterator it = points.begin(); it != points.end();
          ++it) {
       int distance = 400;
-      if ((pow((*it).x() - mousePoint.x(), 2) < distance) &&
-          (pow((*it).y() - mousePoint.y(), 2) < distance)) {
+      if (checkCollision(mousePoint, *it, distance)) {
         mouseCollision = true;
       }
     }
@@ -101,8 +104,7 @@ void Okno::mousePressEvent(QMouseEvent *event) {
     for (std::vector<QPoint>::iterator it = points.begin(); it != points.end();
          ++it) {
       int distance = 400;
-      if ((pow((*it).x() - mousePoint.x(), 2) < distance) &&
-          (pow((*it).y() - mousePoint.y(), 2) < distance)) {
+      if (checkCollision(mousePoint, *it, distance)) {
         mouseCollision = true;
         itPointToDelete = it;
       }
