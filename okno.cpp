@@ -1,167 +1,138 @@
 #include "okno.h"
 #include "./ui_okno.h"
 
-namaespace {
+namespace {
 
-void configurePainterForPoints(QPainter &painter)
-{
-    QPen point_pen(Qt::white);
-    point_pen.setWidth(1);
-    painter->setPen(point_pen);
-    QBrush brush(Qt::gray);
-    painter->setBrush(brush);
+void configurePainterForPoints(QPainter &painter) {
+  QPen point_pen(Qt::white);
+  point_pen.setWidth(1);
+  painter.setPen(point_pen);
+  QBrush brush(Qt::gray);
+  painter.setBrush(brush);
 }
 
-void configurePainterForLines(QPainter &painter)
-{
-    QPen line_pen(Qt::green);
-    line_pen.setWidth(1);
-    painter->setPen(line_pen);
+void configurePainterForLines(QPainter &painter) {
+  QPen line_pen(Qt::green);
+  line_pen.setWidth(1);
+  painter.setPen(line_pen);
 }
 
+} // namespace
+
+Okno::Okno(QWidget *parent) : QWidget(parent), ui(new Ui::Okno) {
+  ui->setupUi(this);
+  refreshPointsCountText();
+  generatePoints();
 }
 
-Okno::Okno(QWidget *parent)
-    : QWidget(parent)
-    , ui(new Ui::Okno)
-{
-    ui->setupUi(this);
-    refreshPointsCountText();
-    generatePoints();
+Okno::~Okno() { delete ui; }
+
+// Buttons----------------------------------------
+void Okno::on_clearButton_clicked() {
+  clearPoints();
+  refreshPointsCountText();
+  isVecCleared = true;
+  update();
 }
 
-Okno::~Okno()
-{
-    delete ui;
-}
+void Okno::on_closeButton_clicked() { QApplication::exit(); }
 
-//Buttons----------------------------------------
-void Okno::on_clearButton_clicked()
-{
-    clearPoints();
-    refreshPointsCountText();
-    isVecCleared = true;
-    update();
-}
-
-void Okno::on_closeButton_clicked()
-{
-    QApplication::exit();
-}
-
-void Okno::on_generateButton_clicked()
-{
-    if(isVecCleared || points.size() < startPointsCount)
-    {
+void Okno::on_generateButton_clicked() {
+  if (isVecCleared || points.size() < startPointsCount) {
     generatePoints();
     refreshPointsCountText();
     isVecCleared = false;
     update();
-    }
+  }
 }
 
-//Points-----------------------------------------
-void Okno::refreshPointsCountText()
-{
-   ui->points_count_label->setText(QString::number(points.size(),10));
+// Points-----------------------------------------
+void Okno::refreshPointsCountText() {
+  ui->points_count_label->setText(QString::number(points.size(), 10));
 }
 
-void Okno::generatePoints()
-{
-    while (points.size() < startPointsCount)
-    {
-        if (points.size() == 0)
-        {
-            int x = QRandomGenerator::global()->bounded(30,770);
-            int y = QRandomGenerator::global()->bounded(50,530);
-            points.push_back(QPoint(x,y));
+void Okno::generatePoints() {
+  while (points.size() < startPointsCount) {
+    if (points.size() == 0) {
+      int x = QRandomGenerator::global()->bounded(30, 770);
+      int y = QRandomGenerator::global()->bounded(50, 530);
+      points.push_back(QPoint(x, y));
+    } else {
+      int x = QRandomGenerator::global()->bounded(30, 770);
+      int y = QRandomGenerator::global()->bounded(60, 530);
+      bool collision{false};
+      for (auto &p : points) {
+        if ((pow(p.x() - x, 2) < 300) && (pow(p.y() - y, 2) < 300)) {
+          collision = true;
         }
-        else
-        {
-            int x = QRandomGenerator::global()->bounded(30,770);
-            int y = QRandomGenerator::global()->bounded(60,530);
-            bool collision{false};
-            for (auto &p : points)
-            {
-                if ( (pow(p.x()-x, 2) < 300) && (pow(p.y()-y, 2) < 300) )
-                {
-                    collision = true;
-                }
-            }
-            if (!collision) points.push_back(QPoint(x,y));
-        }
+      }
+      if (!collision)
+        points.push_back(QPoint(x, y));
     }
+  }
+  refreshPointsCountText();
+}
+
+void Okno::clearPoints() { points.clear(); }
+
+// Mouse---------------------------------------
+void Okno::mousePressEvent(QMouseEvent *event) {
+  QPoint mousePoint{event->pos()};
+  bool mouseCollision{false};
+  std::vector<QPoint>::iterator itPointToDelete;
+
+  if (event->button() == Qt::LeftButton) {
+    for (std::vector<QPoint>::iterator it = points.begin(); it != points.end();
+         ++it) {
+      int distance = 400;
+      if ((pow((*it).x() - mousePoint.x(), 2) < distance) &&
+          (pow((*it).y() - mousePoint.y(), 2) < distance)) {
+        mouseCollision = true;
+      }
+    }
+    if (!mouseCollision)
+      points.push_back(mousePoint);
+    update();
     refreshPointsCountText();
-}
+  }
 
-void Okno::clearPoints()
-{
-    points.clear();
-}
+  if (event->button() == Qt::RightButton) {
 
-//Mouse---------------------------------------
-void Okno::mousePressEvent(QMouseEvent *event)
-{
-    QPoint mousePoint {event->pos()};
-    bool mouseCollision {false};
-    std::vector<QPoint>::iterator itPointToDelete;
-
-    if (event->button() == Qt::LeftButton){
-        for (std::vector<QPoint>::iterator it = points.begin() ; it != points.end(); ++it)
-        {
-            int distance = 400;
-            if ( (pow((*it).x() - mousePoint.x(), 2) < distance) && (pow((*it).y() - mousePoint.y(), 2) < distance) )
-            {
-                mouseCollision = true;
-            }
-        }
-        if (!mouseCollision) points.push_back(mousePoint);
-        update();
-        refreshPointsCountText();
+    for (std::vector<QPoint>::iterator it = points.begin(); it != points.end();
+         ++it) {
+      int distance = 400;
+      if ((pow((*it).x() - mousePoint.x(), 2) < distance) &&
+          (pow((*it).y() - mousePoint.y(), 2) < distance)) {
+        mouseCollision = true;
+        itPointToDelete = it;
+      }
     }
+    if (mouseCollision)
+      points.erase(itPointToDelete);
+    update();
+    refreshPointsCountText();
+  }
+}
 
-    if (event->button() == Qt::RightButton){
+// Draw-------------------------------------------
+void Okno::paintEvent(QPaintEvent *e) {
+  QPainter painter(this);
+  drawLines(painter);
+  drawPoints(painter);
+}
 
-        for (std::vector<QPoint>::iterator it = points.begin() ; it != points.end(); ++it)
-        {
-            int distance = 400;
-            if ( (pow((*it).x() - mousePoint.x(), 2) < distance) && (pow((*it).y() - mousePoint.y(), 2) < distance) )
-            {
-                mouseCollision = true;
-                itPointToDelete = it;
-            }
-        }
-        if (mouseCollision) points.erase(itPointToDelete);
-        update();
-        refreshPointsCountText();
+void Okno::drawPoints(QPainter &painter) const {
+  configurePainterForPoints(painter);
+  for_each(points.begin(), points.end(),
+           [&](QPoint point) { painter->drawEllipse(point, 10, 10); });
+}
+
+void Okno::drawLines(QPainter &painter) const {
+  if (points.size() > 1) {
+    configurePainterForLines(painter);
+    for (std::vector<QPoint>::const_iterator it = points.begin();
+         it != points.end() - 1; ++it) {
+      painter.drawLine(*it, *(it + 1));
     }
+  }
 }
-
-//Draw-------------------------------------------
-void Okno::paintEvent(QPaintEvent *e)
-{
-    QPainter painter(this);
-    drawLines(painter);
-    drawPoints(painter);
-}
-
-void Okno::drawPoints(QPainter &painter) const
-{
-    configurePainterForPoints(painter);
-    for_each (points.begin(), points.end(), [&](QPoint point){painter->drawEllipse(point, 10, 10);});
-}
-
-void Okno::drawLines(QPainter &painter) const
-{
-    if (points.size() > 1)
-    {
-        configurePainterForLines(painter);
-        for (std::vector<QPoint>::const_iterator it = points.begin() ; it != points.end()-1; ++it)
-        {
-            painter->drawLine(*it, *(it+1));
-        }
-    }
-}
-
-
-
