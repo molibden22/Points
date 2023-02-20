@@ -17,8 +17,16 @@ void configurePainterForLines(QPainter &painter) {
   painter.setPen(line_pen);
 }
 
-bool checkCollision(const QPoint& point1, const QPoint& point2, const int minimumDistance) {
-    return ((pow(point1.x() - point2.x(), 2) < minimumDistance) && (pow(point1.y() - point2.y(), 2) < minimumDistance));
+bool checkCollision(const QPoint &point1, const QPoint &point2,
+                    const int minimumDistance) {
+  return ((pow(point1.x() - point2.x(), 2) < minimumDistance) &&
+          (pow(point1.y() - point2.y(), 2) < minimumDistance));
+}
+
+QPoint setRandomPoint() {
+  int x = QRandomGenerator::global()->bounded(30, 770);
+  int y = QRandomGenerator::global()->bounded(50, 530);
+  return QPoint(x, y);
 }
 
 } // namespace
@@ -26,7 +34,7 @@ bool checkCollision(const QPoint& point1, const QPoint& point2, const int minimu
 Okno::Okno(QWidget *parent) : QWidget(parent), ui(new Ui::Okno) {
   ui->setupUi(this);
   refreshPointsCountText();
-  generatePoints();
+  generateRandomPoints();
 }
 
 Okno::~Okno() { delete ui; }
@@ -43,7 +51,7 @@ void Okno::on_closeButton_clicked() { QApplication::exit(); }
 
 void Okno::on_generateButton_clicked() {
   if (isVecCleared || points.size() < startPointsCount) {
-    generatePoints();
+    generateRandomPoints();
     refreshPointsCountText();
     isVecCleared = false;
     update();
@@ -55,23 +63,19 @@ void Okno::refreshPointsCountText() {
   ui->points_count_label->setText(QString::number(points.size(), 10));
 }
 
-void Okno::generatePoints() {
+void Okno::generateRandomPoints() {
   while (points.size() < startPointsCount) {
     if (points.size() == 0) {
-      int x = QRandomGenerator::global()->bounded(30, 770);
-      int y = QRandomGenerator::global()->bounded(50, 530);
-      points.push_back(QPoint(x, y));
+      points.push_back(setRandomPoint());
     } else {
-      int x = QRandomGenerator::global()->bounded(30, 770);
-      int y = QRandomGenerator::global()->bounded(60, 530);
-      bool collision{false};
-      for (auto &p : points) {
-        if ((pow(p.x() - x, 2) < 300) && (pow(p.y() - y, 2) < 300)) {
+      auto newPoint = setRandomPoint();
+      bool collision = false;
+      for (auto &point : points) {
+        if (checkCollision(point, newPoint, 400))
           collision = true;
-        }
       }
       if (!collision)
-        points.push_back(QPoint(x, y));
+        points.push_back(newPoint);
     }
   }
   refreshPointsCountText();
@@ -82,38 +86,30 @@ void Okno::clearPoints() { points.clear(); }
 // Mouse---------------------------------------
 void Okno::mousePressEvent(QMouseEvent *event) {
   QPoint mousePoint{event->pos()};
-  bool mouseCollision{false};
-  std::vector<QPoint>::iterator itPointToDelete;
 
   if (event->button() == Qt::LeftButton) {
-    for (std::vector<QPoint>::iterator it = points.begin(); it != points.end();
-         ++it) {
-      int distance = 400;
-      if (checkCollision(mousePoint, *it, distance)) {
-        mouseCollision = true;
-      }
-    }
-    if (!mouseCollision)
+    if (auto found = findCollision(mousePoint, 400); found == points.end()) {
       points.push_back(mousePoint);
+    }
     update();
     refreshPointsCountText();
   }
 
   if (event->button() == Qt::RightButton) {
-
-    for (std::vector<QPoint>::iterator it = points.begin(); it != points.end();
-         ++it) {
-      int distance = 400;
-      if (checkCollision(mousePoint, *it, distance)) {
-        mouseCollision = true;
-        itPointToDelete = it;
-      }
+    if (auto found = findCollision(mousePoint, 400); found != points.end()) {
+      points.erase(found);
     }
-    if (mouseCollision)
-      points.erase(itPointToDelete);
     update();
     refreshPointsCountText();
   }
+}
+
+std::vector<QPoint>::const_iterator Okno::findCollision(const QPoint &point1,
+                                                        int distance) const {
+  return std::find_if(points.begin(), points.end(),
+                      [point1, distance](auto const &point2) {
+                        return checkCollision(point1, point2, distance);
+                      });
 }
 
 // Draw-------------------------------------------
@@ -126,7 +122,7 @@ void Okno::paintEvent(QPaintEvent *e) {
 void Okno::drawPoints(QPainter &painter) const {
   configurePainterForPoints(painter);
   for_each(points.begin(), points.end(),
-           [&](QPoint point) { painter->drawEllipse(point, 10, 10); });
+           [&](QPoint point) { painter.drawEllipse(point, 10, 10); });
 }
 
 void Okno::drawLines(QPainter &painter) const {
