@@ -8,9 +8,9 @@
 
 namespace {
 
-constexpr int pointRadius = 8;
-constexpr int penWidth = 2;
-constexpr int clickCollisionDistance = 20;
+constexpr int pointRadius = 10;
+constexpr int penWidth = 1;
+constexpr int clickCollisionDistance =pointRadius+penWidth+ 20;
 constexpr int generatorCollisionDistance = 30;
 constexpr int pointsBorderDistance = pointRadius+penWidth;
 constexpr int startPointsCount = 20;
@@ -20,7 +20,7 @@ void configurePainterForPoints(QPainter &painter) {
   pen.setWidth(penWidth);
   painter.setPen(pen);
 
-  QBrush brush(Qt::lightGray);
+  QBrush brush(Qt::gray);
   painter.setBrush(brush);
 }
 
@@ -46,11 +46,10 @@ void correctPointCordsNearBorder(QPoint &point, InteractivePointsTable *table) {
 
 InteractivePointsTable::InteractivePointsTable(QWidget *parent)
     : QFrame{parent} {
-  setWindowOpacity(0.2);
-  setStyleSheet("background-color: rgb(128, 128, 128)");
-  QRect rect(0,0,770,500);
-  setGeometry(rect);
-        //qDebug() << this << this->frameSize() << this->geometry() << this->width();
+  setStyleSheet("background-color: rgb(10, 10, 10)");
+  QRect rectangle(0,0,770,500);
+  setGeometry(rectangle);
+        qDebug() << this << this->frameSize() << this->geometry() << this->width();
 }
 
 std::size_t InteractivePointsTable::pointsCount() const {
@@ -87,7 +86,8 @@ void InteractivePointsTable::mousePressEvent(QMouseEvent *event) {
 
     if (event->button() == Qt::LeftButton) {
       currentySelectedPoint = &(*found);
-            //qDebug() << "InteractivePointsTable:" << this->frameSize() << this->geometry();
+      // qDebug() << "InteractivePointsTable:" << this->frameSize() <<
+      // this->geometry();
     } else if (event->button() == Qt::RightButton) {
       points.erase(found);
     }
@@ -95,10 +95,10 @@ void InteractivePointsTable::mousePressEvent(QMouseEvent *event) {
     emit pointsCountChanged();
   } else {
     if (event->button() == Qt::LeftButton) {
-        QPoint p{mouseClickPoint};
+      QPoint p{mouseClickPoint};
       correctPointCordsNearBorder(p, this);
       points.push_back(p);
-            //qDebug() << " point" << p;
+      // qDebug() << " point" << p;
       update();
       emit pointsCountChanged();
     }
