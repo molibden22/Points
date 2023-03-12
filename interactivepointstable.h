@@ -9,6 +9,7 @@ public:
 
 public:
   std::size_t pointsCount() const;
+
 public slots:
   void clearPoints();
   void generateRandomPoints();
@@ -23,13 +24,14 @@ protected:
   void paintEvent(QPaintEvent* event) override;
 
 private:
-  std::vector<QPoint>::const_iterator findCollision(const QPoint& point1, int distance) const;
-  std::vector<QPoint>::iterator findCollision(const QPoint &point1, const int distance);
+  std::vector<QPointF>::const_iterator findCollision(const QPointF& point1, int distance) const;
+  std::vector<QPointF>::iterator findCollision(const QPointF& point1, const int distance);
   void drawPoints(QPainter& painter) ;
   void drawLines(QPainter& painter) const;
+  QPoint transformToQPoint(QPointF pointF) const;
+  QPointF transformToQPointF(QPoint point) const;
 
 private:
-  std::vector<QPoint> points;
-  std::vector<QPointF> pointsF;
-  QPoint* currentySelectedPoint{nullptr};
+  std::vector<QPointF> points;
+  QPointF* currentlySelectedPoint{nullptr};
 };

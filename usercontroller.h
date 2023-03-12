@@ -12,11 +12,9 @@ public:
 
 public slots:
 
-private slots:
-
 signals:
-    void clearButtonClicked();
-    void generateButtonClicked();
-    void exitButtonClicked();
-    void freeFallButtonClicked();
+  void clearButtonClicked();
+  void generateButtonClicked();
+  void exitButtonClicked();
+  void freeFallButtonClicked();
 };
